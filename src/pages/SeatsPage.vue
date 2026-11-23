@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '../components/UiButton.vue'
-import { movies, hallRows, takenSeats, seatPrices, cinemaAddress, user } from '../data'
+import { movies, hallRows, takenSeats, seatPrices, cinemaAddress, user, asset } from '../data'
 import type { Order, Seat } from '../data'
 
 const router = useRouter()
@@ -20,9 +20,9 @@ function isSelected(row: number, num: number) {
   return selected.value.some((s) => s.row === row && s.num === num)
 }
 function icon(row: number, num: number) {
-  if (isTaken(row, num)) return '/img/seat-taken.png'
-  if (isSelected(row, num)) return '/img/seat-selected.png'
-  return hallRows[row - 1][num - 1] === 'c' ? '/img/seat-comfort.png' : '/img/seat-free.png'
+  if (isTaken(row, num)) return asset('/img/seat-taken.png')
+  if (isSelected(row, num)) return asset('/img/seat-selected.png')
+  return hallRows[row - 1][num - 1] === 'c' ? asset('/img/seat-comfort.png') : asset('/img/seat-free.png')
 }
 function toggle(row: number, num: number) {
   if (!user.value) {
@@ -74,10 +74,10 @@ function next() {
     </div>
 
     <div class="legend">
-      <div class="item"><img src="/img/seat-free.png" /><span>Место<br />{{ seatPrices.place }}р</span></div>
-      <div class="item"><img src="/img/seat-comfort.png" /><span>Комфорт<br />{{ seatPrices.comfort }}р</span></div>
-      <div class="item"><img src="/img/seat-taken.png" /><span>Занято</span></div>
-      <div class="item"><img src="/img/seat-selected.png" /><span>Выбранное вами</span></div>
+      <div class="item"><img :src="asset('/img/seat-free.png')" /><span>Место<br />{{ seatPrices.place }}р</span></div>
+      <div class="item"><img :src="asset('/img/seat-comfort.png')" /><span>Комфорт<br />{{ seatPrices.comfort }}р</span></div>
+      <div class="item"><img :src="asset('/img/seat-taken.png')" /><span>Занято</span></div>
+      <div class="item"><img :src="asset('/img/seat-selected.png')" /><span>Выбранное вами</span></div>
     </div>
 
     <div v-if="selected.length" class="panel">

@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import MainPage from '../pages/MainPage.vue'
 import CatalogPage from '../pages/CatalogPage.vue'
 import FiltersPage from '../pages/FiltersPage.vue'
@@ -21,7 +21,10 @@ import RefundPage from '../pages/RefundPage.vue'
 import RefundDonePage from '../pages/RefundDonePage.vue'
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history:
+    import.meta.env.MODE === 'ghpages'
+      ? createWebHashHistory(import.meta.env.BASE_URL)
+      : createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', component: MainPage },
     { path: '/catalog', component: CatalogPage },

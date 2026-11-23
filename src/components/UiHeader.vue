@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from './UiButton.vue'
-import { user } from '../data'
+import { user, asset} from '../data'
 
 const router = useRouter()
 const query = ref('')
@@ -21,7 +21,7 @@ function logout() {
 <template>
   <header>
     <div class="top">
-      <img src="/logo.jpg" alt="Логотип" class="logo" @click="router.push('/')" />
+      <img :src="asset('/logo.jpg')" alt="Логотип" class="logo" @click="router.push('/')" />
 
       <UiButton
         v-if="user"

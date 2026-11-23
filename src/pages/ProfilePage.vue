@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '../components/UiButton.vue'
-import { movies, pastTickets, user } from '../data'
+import { movies, pastTickets, user, asset } from '../data'
 import type { Ticket } from '../data'
 
 interface Review {
@@ -60,7 +60,7 @@ function moviePoster(id: number) {
         <img :src="moviePoster(t.movieId)" class="poster" />
         <h2>{{ movieTitle(t.movieId) }}</h2>
         <p class="meta">{{ t.date }} в {{ t.time }} · {{ t.seats.map((s) => `${s.row} ряд, ${s.num} место`).join('; ') }}</p>
-        <img src="/img/qr.png" class="qr" alt="QR-код билета" />
+        <img :src="asset('/img/qr.png')" class="qr" alt="QR-код билета" />
         <div class="row">
           <UiButton variant="secondary" @click="router.push(`/ticket?id=${t.id}`)">Детали</UiButton>
           <UiButton variant="secondary" @click="router.push(`/refund?id=${t.id}`)">Отмена</UiButton>
