@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import UiButton from '../components/UiButton.vue'
 import UiInput from '../components/UiInput.vue'
 import { movies, cinemaAddress } from '../data'
+import { validateEmail, validatePhone, formatPhone } from '../validation'
 import type { Order } from '../data'
 
 const router = useRouter()
@@ -11,13 +12,28 @@ const order: Order = JSON.parse(sessionStorage.getItem('order')!)
 const movie = movies.find((m) => m.id === order.movieId)!
 
 const email = ref(order.email)
-const phone = ref(order.phone)
+const phone = ref(formatPhone(order.phone))
 const agree1 = ref(false)
 const agree2 = ref(false)
+const touched = ref({ email: false, phone: false })
+
+const errors = computed(() => ({
+  email: touched.value.email ? validateEmail(email.value) : null,
+  phone: touched.value.phone ? validatePhone(phone.value) : null,
+}))
+
 const total = computed(() => order.seats.reduce((sum, s) => sum + s.price, 0))
-const canNext = computed(() => email.value && phone.value && agree1.value && agree2.value)
+const canNext = computed(
+  () =>
+    !validateEmail(email.value) &&
+    !validatePhone(phone.value) &&
+    agree1.value &&
+    agree2.value,
+)
 
 function next() {
+  touched.value = { email: true, phone: true }
+  if (!canNext.value) return
   order.email = email.value
   order.phone = phone.value
   sessionStorage.setItem('order', JSON.stringify(order))
@@ -41,9 +57,15 @@ function next() {
 
     <h2>Данные для получения заказа</h2>
     <p class="meta">Укажите e-mail, куда прислать билеты и чек</p>
-    <UiInput v-model="email" type="email" placeholder="email" />
+    <div class="input-wrap">
+      <UiInput v-model="email" :error="errors.email" type="email" placeholder="email" @blur="touched.email = true" />
+      <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
+    </div>
     <p class="meta">Ваш номер телефона для получения билета</p>
-    <UiInput v-model="phone" type="tel" placeholder="Телефон" />
+    <div class="input-wrap">
+      <UiInput v-model="phone" :error="errors.phone" type="tel" placeholder="Телефон" @blur="touched.phone = true" />
+      <span v-if="errors.phone" class="field-error">{{ errors.phone }}</span>
+    </div>
     <label class="check"><input v-model="agree1" type="checkbox" /> Принимаю условия покупки билетов и товаров</label>
     <label class="check"><input v-model="agree2" type="checkbox" /> Согласен на обработку персональных данных</label>
 

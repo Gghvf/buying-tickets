@@ -3,6 +3,10 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import UiInput from '../components/UiInput.vue'
 import { saveTicket } from '../data'
+import {
+  validateCardNumber, validateCvc, validateHolder,
+  formatCard,
+} from '../validation'
 import type { Order } from '../data'
 
 const router = useRouter()
@@ -16,12 +20,30 @@ const month = ref('')
 const year = ref('')
 const cvc = ref('')
 const holder = ref('')
-const canPay = computed(() => number.value && month.value && year.value && cvc.value && holder.value)
+const touched = ref({ number: false, exp: false, cvc: false, holder: false })
+
+const errors = computed(() => ({
+  number: touched.value.number ? validateCardNumber(number.value) : null,
+  exp: touched.value.exp && (!month.value || !year.value) ? 'Укажите срок действия' : null,
+  cvc: touched.value.cvc ? validateCvc(cvc.value) : null,
+  holder: touched.value.holder ? validateHolder(holder.value) : null,
+}))
+
+const canPay = computed(
+  () =>
+    !validateCardNumber(number.value) &&
+    month.value &&
+    year.value &&
+    !validateCvc(cvc.value) &&
+    !validateHolder(holder.value),
+)
 
 function pay() {
+  touched.value = { number: true, exp: true, cvc: true, holder: true }
+  if (!canPay.value) return
   const digits = number.value.replace(/\s/g, '')
   if (digits.endsWith('0000')) {
-    router.push('/error') // демо-правило: карта на 0000 → ошибка оплаты
+    router.push('/error')
     return
   }
   sessionStorage.setItem('card', '****' + digits.slice(-4))
@@ -51,19 +73,52 @@ function paySaved() {
     </template>
 
     <template v-else>
-      <UiInput v-model="number" class="field" placeholder="Номер карты" />
-      <div class="exp">
-        <select v-model="month" class="field">
-          <option value="" disabled>Месяц</option>
-          <option v-for="m in 12" :key="m" :value="m">{{ String(m).padStart(2, '0') }}</option>
-        </select>
-        <select v-model="year" class="field">
-          <option value="" disabled>Год</option>
-          <option v-for="y in 8" :key="y" :value="25 + y">{{ 25 + y }}</option>
-        </select>
+      <div class="input-wrap">
+        <input
+          v-model="number"
+          :class="['field', { error: errors.number }]"
+          placeholder="Номер карты"
+          maxlength="19"
+          @input="number = formatCard($event.target.value)"
+          @blur="touched.number = true"
+        />
+        <span v-if="errors.number" class="field-error">{{ errors.number }}</span>
       </div>
-      <UiInput v-model="cvc" class="field" type="password" placeholder="CVC/CVV" />
-      <UiInput v-model="holder" class="field" placeholder="Держатель карты" />
+      <div class="input-wrap">
+        <div class="exp">
+          <select v-model="month" :class="{ error: errors.exp }" @blur="touched.exp = true">
+            <option value="" disabled>Месяц</option>
+            <option v-for="m in 12" :key="m" :value="m">{{ String(m).padStart(2, '0') }}</option>
+          </select>
+          <select v-model="year" :class="{ error: errors.exp }" @blur="touched.exp = true">
+            <option value="" disabled>Год</option>
+            <option v-for="y in 8" :key="y" :value="25 + y">{{ 25 + y }}</option>
+          </select>
+        </div>
+        <span v-if="errors.exp" class="field-error">{{ errors.exp }}</span>
+      </div>
+      <div class="input-wrap">
+        <input
+          v-model="cvc"
+          :class="['field', { error: errors.cvc }]"
+          type="password"
+          placeholder="CVC/CVV"
+          maxlength="3"
+          @input="cvc = cvc.replace(/\D/g, '').slice(0, 3)"
+          @blur="touched.cvc = true"
+        />
+        <span v-if="errors.cvc" class="field-error">{{ errors.cvc }}</span>
+      </div>
+      <div class="input-wrap">
+        <input
+          v-model="holder"
+          :class="['field', { error: errors.holder }]"
+          placeholder="Держатель карты"
+          @input="holder = $event.target.value.toUpperCase().replace(/[^A-Z\s]/g, '')"
+          @blur="touched.holder = true"
+        />
+        <span v-if="errors.holder" class="field-error">{{ errors.holder }}</span>
+      </div>
       <button class="pay" :disabled="!canPay" @click="pay">Оплатить картой</button>
     </template>
 
@@ -78,9 +133,17 @@ function paySaved() {
 .bank-name { font-size: 36px; }
 .amount { height: 52px; padding: 0 15px; border-radius: 12px; background: var(--black); color: var(--white); font-size: 20px; display: flex; align-items: center; }
 .saved { height: 52px; padding: 0 15px; border: 1px solid var(--black); border-radius: 12px; display: flex; align-items: center; }
-.field { border: 1px solid var(--black); border-radius: 12px; height: 52px; }
+.field {
+  width: 100%; height: 52px; padding: 0 16px; border: 1px solid var(--black);
+  border-radius: 12px; background: var(--white); color: var(--black); font-size: 16px; outline: none;
+}
+.field.error { border-color: var(--gold); }
 .exp { display: flex; gap: 13px; }
-.exp select { flex: 1; padding: 0 12px; background: var(--white); color: var(--black); }
+.exp select {
+  flex: 1; height: 52px; padding: 0 12px; background: var(--white); color: var(--black);
+  border: 1px solid var(--black); border-radius: 12px;
+}
+.exp select.error { border-color: var(--gold); }
 .pay { height: 52px; border: none; border-radius: 12px; background: var(--black); color: var(--white); font-size: 16px; cursor: pointer; }
 .pay:disabled { opacity: 0.5; cursor: default; }
 .light { background: var(--white); color: var(--black); border: 1px solid var(--black); }

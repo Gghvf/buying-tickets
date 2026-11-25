@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import UiButton from '../components/UiButton.vue'
 import { movies, pastTickets, user, asset } from '../data'
 import type { Ticket } from '../data'
+import { validateReview } from '../validation'
 
 interface Review {
   id: number
@@ -27,7 +28,10 @@ const reviewMovie = ref(movies[0].id)
 const reviewRating = ref(10)
 const reviewText = ref('')
 
+const reviewError = computed(() => (reviewText.value ? validateReview(reviewText.value) : null))
+const canAddReview = computed(() => !validateReview(reviewText.value))
 function addReview() {
+  if (!canAddReview.value) return
   reviews.value.push({
     id: Date.now(),
     movieId: reviewMovie.value,
@@ -98,8 +102,19 @@ function moviePoster(id: number) {
         <select v-model="reviewRating">
           <option v-for="n in 10" :key="n" :value="11 - n">{{ 11 - n }}/10</option>
         </select>
-        <textarea v-model="reviewText" placeholder="Впечатления о фильме и зале"></textarea>
-        <UiButton :disabled="!reviewText.trim()" @click="addReview">Оставить отзыв</UiButton>
+        <div class="input-wrap">
+          <textarea
+            v-model="reviewText"
+            :class="{ error: reviewError }"
+            placeholder="Впечатления о фильме и зале (20–300 символов)"
+            maxlength="300"
+          ></textarea>
+          <div class="review-meta">
+            <span v-if="reviewError" class="field-error">{{ reviewError }}</span>
+            <span class="counter">{{ reviewText.length }} / 300</span>
+          </div>
+        </div>
+        <UiButton :disabled="!canAddReview" @click="addReview">Оставить отзыв</UiButton>
       </div>
     </template>
   </div>
@@ -128,4 +143,7 @@ h2 { font-size: 20px; }
   min-height: 80px; padding: 12px; border: none; border-radius: 8px;
   background: var(--white); color: var(--black); font: inherit; resize: vertical; outline: none;
 }
+.review-meta { display: flex; justify-content: space-between; font-size: 12px; }
+.counter { color: var(--gray); margin-left: auto; }
+textarea.error { outline: 1px solid var(--gold); }
 </style>

@@ -1,19 +1,28 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '../components/UiButton.vue'
 import UiInput from '../components/UiInput.vue'
 import { defaultUser, findAccount, signIn } from '../data'
+import { validatePhone, validatePassword, formatPhone } from '../validation'
 
 const router = useRouter()
-const phone = ref(defaultUser.phone)
+const phone = ref(formatPhone(defaultUser.phone))
 const password = ref(findAccount(defaultUser.phone)?.password ?? '')
-const error = ref('')
+const touched = ref({ phone: false, password: false })
+
+const phoneError = computed(() => (touched.value.phone ? validatePhone(phone.value) : null))
+const passwordError = computed(() => (touched.value.password ? validatePassword(password.value) : null))
+const canSubmit = computed(() => !validatePhone(phone.value) && !validatePassword(password.value))
 
 function submit() {
+  touched.value.phone = true
+  touched.value.password = true
+  if (!canSubmit.value) return
   const account = findAccount(phone.value)
   if (!account || account.password !== password.value) {
-    error.value = 'Неверный номер или пароль'
+    // показываем как ошибку на поле пароля
+    password.value = ''
     return
   }
   signIn(account)
@@ -24,9 +33,14 @@ function submit() {
 <template>
   <div class="page login">
     <h1>Вход</h1>
-    <UiInput v-model="phone" placeholder="Номер телефона" />
-    <UiInput v-model="password" type="password" placeholder="Пароль" />
-    <p v-if="error" class="error">{{ error }}</p>
+    <div class="input-wrap">
+      <UiInput v-model="phone" :error="phoneError" placeholder="Номер телефона" @blur="touched.phone = true" />
+      <span v-if="phoneError" class="field-error">{{ phoneError }}</span>
+    </div>
+    <div class="input-wrap">
+      <UiInput v-model="password" type="password" :error="passwordError" placeholder="Пароль" @blur="touched.password = true" />
+      <span v-if="passwordError" class="field-error">{{ passwordError }}</span>
+    </div>
     <UiButton variant="secondary" class="enter" @click="submit">Войти</UiButton>
     <div class="links">
       <RouterLink to="/forgot">Забыли пароль?</RouterLink>
@@ -41,5 +55,4 @@ h1 { font-size: 32px; margin-bottom: 16px; }
 .enter { width: 191px; height: 48px; margin-top: 17px; }
 .links { align-self: flex-start; display: flex; flex-direction: column; gap: 9px; margin-top: 9px; }
 a { color: var(--white); text-decoration: none; }
-.error { color: var(--gold); font-size: 14px; }
 </style>

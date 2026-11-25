@@ -55,14 +55,13 @@ export interface Filters {
   ratings: string[]
 }
 
-// локально даст '/img/...', на Pages — '/buying-tickets/img/...'
 export function asset(path: string) {
   return import.meta.env.BASE_URL + path.slice(1)
 }
 
 export const emptyFilters: Filters = { genres: [], ages: [], durations: [], countries: [], ratings: [] }
 
-export const defaultUser: Account = { name: 'User123', phone: '+7 900 123-45-67', password: '123456' }
+export const defaultUser: Account = { name: 'User123', phone: '+7 900 123-45-67', password: '12345678' }
 
 export const accounts = ref<Account[]>(JSON.parse(sessionStorage.getItem('accounts') || 'null') ?? [defaultUser])
 export const user = ref<string | null>(sessionStorage.getItem('userName'))

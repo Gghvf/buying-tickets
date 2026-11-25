@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import UiInput from '../components/UiInput.vue'
 import { movies, saveTicket } from '../data'
+import { validateEmail } from '../validation'
 import type { Order } from '../data'
 
 const router = useRouter()
@@ -12,8 +14,14 @@ const total = computed(() => order.seats.reduce((sum, s) => sum + s.price, 0))
 const showDetails = ref(false)
 const receipt = ref(true)
 const email = ref(order.email)
+const touched = ref(false)
+
+const emailError = computed(() => (touched.value && receipt.value ? validateEmail(email.value) : null))
+const canPay = computed(() => !receipt.value || !validateEmail(email.value))
 
 function paySbp() {
+  if (receipt.value) touched.value = true
+  if (!canPay.value) return
   saveTicket(order)
   router.push('/success')
 }
@@ -43,11 +51,14 @@ function paySbp() {
 
     <div class="email-box">
       <label class="check"><input v-model="receipt" type="checkbox" /> Получить чек на e-mail</label>
-      <input v-if="receipt" v-model="email" type="email" placeholder="Электронная почта" class="email" />
+      <div v-if="receipt" class="input-wrap">
+        <UiInput v-model="email" :error="emailError" type="email" placeholder="Электронная почта" @blur="touched = true" />
+        <span v-if="emailError" class="field-error">{{ emailError }}</span>
+      </div>
     </div>
 
-    <button class="pay" @click="router.push('/payment/card')">Оплатить картой</button>
-    <button class="pay sbp" @click="paySbp">Оплатить СБП</button>
+    <button class="pay" :disabled="!canPay" @click="router.push('/payment/card')">Оплатить картой</button>
+    <button class="pay sbp" :disabled="!canPay" @click="paySbp">Оплатить СБП</button>
     <p class="terms">Нажимая “Оплатить”, вы соглашаетесь с условиями сервиса</p>
   </div>
 </template>
@@ -67,8 +78,8 @@ function paySbp() {
 .email-box { background: var(--black); color: var(--white); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 15px; }
 .check { display: flex; align-items: center; gap: 10px; }
 .check input { width: 23px; height: 23px; accent-color: var(--white); }
-.email { height: 47px; padding: 0 12px; border: none; border-radius: 12px; background: var(--white); color: var(--black); font-size: 13px; outline: none; }
 .pay { height: 52px; border: none; border-radius: 12px; background: var(--black); color: var(--white); font-size: 16px; cursor: pointer; }
+.pay:disabled { opacity: 0.5; cursor: default; }
 .sbp { background: var(--white); color: var(--black); border: 1px solid var(--black); }
 .terms { font-size: 20px; text-align: center; }
 </style>

@@ -40,3 +40,10 @@ html { scrollbar-width: thin; scrollbar-color: var(--gold) var(--panel); }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--panel); }
 ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+.input-wrap { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.field-error {
+  font-size: 12px; color: var(--gold);
+}
+.ui-input.error {
+  outline: 1px solid var(--gold);
+}

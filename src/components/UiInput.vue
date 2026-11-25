@@ -1,9 +1,10 @@
 <script setup lang="ts">
+withDefaults(defineProps<{ error?: string | null }>(), { error: null })
 const model = defineModel<string>({ required: true })
 </script>
 
 <template>
-  <input v-model="model" class="ui-input" />
+  <input v-model="model" class="ui-input" :class="{ error }" />
 </template>
 
 <style scoped>
@@ -19,4 +20,7 @@ const model = defineModel<string>({ required: true })
   outline: none;
 }
 .ui-input::placeholder { color: var(--black); }
+.ui-input.error {
+  outline: 1px solid var(--gold);
+}
 </style>
